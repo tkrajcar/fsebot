@@ -23,7 +23,6 @@ puts "Reading data from #{data["timestamp"]}."
 # check $ balances
 doc = Nokogiri::XML(open(fse_url('statistics')))
 
-
 newd["bank_balance"] = doc.css("Bank_balance").text
 newd["personal_balance"] = doc.css("Personal_balance").text
 
@@ -43,6 +42,25 @@ if (old_bank != new_bank || old_cash != new_cash)
   end
 
   messages.push "New balances: #{new_cash.format} in cash, #{new_bank.format} in the bank"
+end
+
+# check aircraft location
+doc = Nokogiri::XML(open(fse_url('aircraft')))
+doc.css("Aircraft").each do |ac|
+  reg = ac.css("Registration").text
+  old_location = data["#{reg}_location"] || "Who Knows"
+  new_location = ac.css("Location").text
+  newd["#{reg}_location"] = new_location
+  rented_by = ac.css("RentedBy").text
+  if old_location != new_location
+    if new_location == "In Flight"
+      messages.push "#{reg} departed #{old_location}, flown by #{rented_by}."
+    elsif old_location == "In Flight"
+      messages.push "#{reg} arrived at #{new_location}."
+    else
+      messages.push "#{reg} is now located at #{new_location} instead of #{old_location}."
+    end
+  end
 end
 
 messages.each do |msg|
