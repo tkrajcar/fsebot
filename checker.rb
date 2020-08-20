@@ -41,7 +41,7 @@ if (old_bank != new_bank || old_cash != new_cash)
     messages.push "Cash balance #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format}."
   end
 
-  messages.push "New balances: #{new_cash.format} in cash, #{new_bank.format} in the bank"
+  messages.push "New balances: #{(new_cash + new_bank).format} total, #{new_cash.format} in cash, #{new_bank.format} in the bank"
 end
 
 # check aircraft location
