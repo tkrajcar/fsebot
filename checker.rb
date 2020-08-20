@@ -1,0 +1,63 @@
+require 'discordrb/webhooks'
+require 'dotenv/load'
+require 'nokogiri'
+require 'open-uri'
+require './util'
+require 'bigdecimal/util'
+require 'money'
+require 'monetize'
+
+I18n.enforce_available_locales = false
+
+Money.default_currency = 'USD'
+
+client = Discordrb::Webhooks::Client.new(url: ENV['WEBHOOK_URL'])
+
+FileUtils.cp("data.json.dist","data.json") unless File.exists?("data.json")
+
+data = JSON.parse(File.read("data.json"))
+newd = {}
+messages = []
+puts "Reading data from #{data["timestamp"]}."
+
+# check $ balances
+doc = Nokogiri::XML(open(fse_url('statistics')))
+
+
+newd["bank_balance"] = doc.css("Bank_balance").text
+newd["personal_balance"] = doc.css("Personal_balance").text
+
+new_bank = newd["bank_balance"].to_money
+new_cash = newd["personal_balance"].to_money
+old_bank = (data["bank_balance"] || 0).to_money
+old_cash = (data["personal_balance"] || 0).to_money
+
+if (old_bank != new_bank || old_cash != new_cash)
+  if old_bank != new_bank
+    diff = new_bank - old_bank
+    messages.push "Bank balance #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format}."
+  end
+  if old_cash != new_cash
+    diff = new_cash - old_cash
+    messages.push "Cash balance #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format}."
+  end
+
+  messages.push "New balances: #{new_cash.format} in cash, #{new_bank.format} in the bank"
+end
+
+messages.each do |msg|
+  client.execute do |builder|
+    # builder.avatar_url = ENV['BOT_AVATAR_URL'] if ENV['BOT_AVATAR_URL']
+    # builder.username = ENV['BOT_NAME'] || "FSEBot"
+    builder.content = msg
+  end
+end
+
+newd["timestamp"] = DateTime.now
+
+# save out data
+out_file = File.new("data.json", "w")
+out_file.puts newd.to_json
+out_file.close
+
+
