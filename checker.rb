@@ -23,25 +23,13 @@ puts "Reading data from #{data["timestamp"]}."
 # check $ balances
 doc = Nokogiri::XML(open(fse_url('statistics')))
 
-newd["bank_balance"] = doc.css("Bank_balance").text
-newd["personal_balance"] = doc.css("Personal_balance").text
+if doc.css("Bank_balance").text && doc.css("Personal_balance").text
+  newd["funds"] = (doc.css("Bank_balance").text.to_money + doc.css("Personal_balance").text.to_money)
 
-new_bank = newd["bank_balance"].to_money
-new_cash = newd["personal_balance"].to_money
-old_bank = (data["bank_balance"] || 0).to_money
-old_cash = (data["personal_balance"] || 0).to_money
+  old_funds = (data["funds"] || 0).to_money
 
-if (old_bank != new_bank || old_cash != new_cash)
-  if old_bank != new_bank
-    diff = new_bank - old_bank
-    messages.push "Bank balance #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format}."
-  end
-  if old_cash != new_cash
-    diff = new_cash - old_cash
-    messages.push "Cash balance #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format}."
-  end
-
-  messages.push "New balances: #{(new_cash + new_bank).format} total, #{new_cash.format} in cash, #{new_bank.format} in the bank"
+  diff = newd["funds"] - old_funds
+  messages.push "Funds #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format} to #{newd["funds"].format}."
 end
 
 # check aircraft location
