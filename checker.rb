@@ -26,7 +26,7 @@ doc = Nokogiri::XML(open(fse_url('statistics')))
 unless doc.css("Bank_balance").text.empty? || doc.css("Personal_balance").text.empty?
   newd["funds"] = (doc.css("Bank_balance").text.to_money + doc.css("Personal_balance").text.to_money)
 
-  old_funds = (data["funds"] || 0).to_money
+  old_funds = data["funds"].to_money
   if newd["funds"] != old_funds
     diff = newd["funds"] - old_funds
     messages.push "Funds #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format} to #{newd["funds"].format}."
