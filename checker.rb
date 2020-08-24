@@ -7,8 +7,8 @@ require 'bigdecimal/util'
 require 'money'
 require 'monetize'
 
-I18n.enforce_available_locales = false
-
+Money.locale_backend = :currency
+Money.rounding_mode = BigDecimal::ROUND_HALF_EVEN
 Money.default_currency = 'USD'
 
 client = Discordrb::Webhooks::Client.new(url: ENV['WEBHOOK_URL'])
