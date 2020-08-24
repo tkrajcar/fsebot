@@ -22,11 +22,15 @@ puts "Reading data from #{data["timestamp"]}."
 
 # check $ balances
 doc = Nokogiri::XML(open(fse_url('statistics')))
-
-unless doc.css("Bank_balance").text.empty? || doc.css("Personal_balance").text.empty?
-  newd["funds"] = (doc.css("Bank_balance").text.to_money + doc.css("Personal_balance").text.to_money)
+bank_text = doc.css("Bank_balance").text
+cash_text = doc.css("Personal_balance").text
+unless bank_text.empty? || cash_text.empty?
+  newd["funds"] = (bank_text.to_money + cash_text.to_money)
 
   old_funds = data["funds"].to_money
+  puts "Old: #{old_funds}"
+  puts "New: #{bank_text} bank and #{cash_text} cash"
+
   if newd["funds"] != old_funds
     diff = newd["funds"] - old_funds
     messages.push "Funds #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format} to #{newd["funds"].format}."
