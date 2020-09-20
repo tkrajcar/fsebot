@@ -1,6 +1,7 @@
 require 'discordrb/webhooks'
 require 'dotenv/load'
 require 'nokogiri'
+require 'active_support/core_ext/hash'
 require 'open-uri'
 require './util'
 require 'bigdecimal/util'
@@ -16,7 +17,7 @@ client = Discordrb::Webhooks::Client.new(url: ENV['WEBHOOK_URL'])
 FileUtils.cp("data.json.dist","data.json") unless File.exists?("data.json")
 
 data = JSON.parse(File.read("data.json"))
-newd = {}
+newd = data.clone
 messages = []
 puts "Reading data from #{data["timestamp"]}."
 
@@ -52,12 +53,58 @@ doc.css("Aircraft").each do |ac|
   end
 end
 
-messages.each do |msg|
-  client.execute do |builder|
-    # builder.avatar_url = ENV['BOT_AVATAR_URL'] if ENV['BOT_AVATAR_URL']
-    # builder.username = ENV['BOT_NAME'] || "FSEBot"
-    builder.content = msg
+# check payments
+xml = open(fse_url('payments')).read
+#xml = open("payments.xml").read
+payments_hash = Hash.from_xml(xml)
+payments = payments_hash["PaymentsByMonthYear"]["Payment"]
+old_payment_id = data["payment_id"].to_i || 0
+new_payments = payments.select {|x| x["Id"].to_i > old_payment_id}
+
+if new_payments.any?
+  newd["payment_id"] = new_payments.first["Id"]
+
+  # attempt to group simultaneous payments (i.e. ground crew fees) together
+  new_payments_grouped = new_payments.group_by {|p| [p["Date"], p["To"], p["From"], p["Reason"], p["Location"], p["Aircraft"], p["Comment"]]}
+
+  payment_messages = []
+  new_payments_grouped.each do |g|
+    amount = g[1].inject(0) {|sum,x| sum + x["Amount"].to_money}
+    qty = g[1].count
+
+    amount_string = "#{amount.format}"
+    amount_string += " (#{g[1].first["Amount"].to_money.format} x #{qty})" if qty > 1
+
+    values = g[0]
+
+    msg = ""
+    if values[1] == ENV["GROUP_NAME"]
+      msg = "Received #{amount_string} from #{values[2]}"
+    else
+      msg = "Paid #{amount_string} to #{values[1]}"
+    end
+    msg += " for #{values[3]}"
+    msg += " in #{values[5]}" if values[5] != ""
+    msg += " at #{values[4]}" if values[4] != "N/A"
+    msg += "."
+    msg += " #{values[6]}" if values[6] != "null"
+
+    payment_messages.push msg
   end
+
+  messages.push payment_messages.first(10).reverse.join("\n")
+end
+
+
+begin
+  messages.each do |msg|
+    client.execute do |builder|
+      # builder.avatar_url = ENV['BOT_AVATAR_URL'] if ENV['BOT_AVATAR_URL']
+      # builder.username = ENV['BOT_NAME'] || "FSEBot"
+      builder.content = msg
+    end
+  end
+rescue RestClient::TooManyRequests
 end
 
 newd["timestamp"] = DateTime.now
