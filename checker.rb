@@ -88,8 +88,8 @@ if new_payments.any?
       msg = "Paid #{amount_string} to #{values[1]}"
     end
     msg += " for #{values[3]}"
-    msg += " in #{values[5]}" if values[5] != ""
-    msg += " at #{values[4]}" if values[4] != "N/A"
+    msg += " in #{values[5]}" if (values[5] && values[5] != "")
+    msg += " at #{values[4]}" if (values[4] && values[4] != "N/A" && values[4] != "null")
     msg += "."
     msg += " #{values[6]}" if values[6] != "null"
 
