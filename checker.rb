@@ -87,7 +87,7 @@ if new_payments.any?
     qty = g[1].count
 
     amount_string = "#{amount.format}"
-    amount_string += " (#{g[1].first["Amount"].to_money.format} x #{qty})" if qty > 1
+    amount_string += " (#{qty} jobs)" if qty > 1
 
     values = g[0]
 
