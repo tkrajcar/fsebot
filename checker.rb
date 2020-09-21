@@ -69,7 +69,17 @@ if new_payments.any?
   newd["payment_id"] = new_payments.first["Id"]
 
   # attempt to group simultaneous payments (i.e. ground crew fees) together
-  new_payments_grouped = new_payments.group_by {|p| [p["Date"].to_datetime.strftime("%Y-%m-%d %H:%M"), p["To"], p["From"], p["Reason"], p["Location"], p["Aircraft"], p["Comment"]]}
+  new_payments_grouped = new_payments.group_by do |p|
+    [
+      p["Date"].to_datetime.strftime("%Y-%m-%d %H:%M"), # 0
+      p["To"], # 1
+      p["From"], # 2
+      p["Reason"], # 3
+      p["Location"], # 4
+      p["Aircraft"], # 5
+      p["Comment"], # 6
+    ]
+  end
 
   payment_messages = []
   new_payments_grouped.each do |g|
