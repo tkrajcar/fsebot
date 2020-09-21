@@ -92,7 +92,9 @@ if new_payments.any?
     values = g[0]
 
     msg = ""
-    if values[1] == ENV["GROUP_NAME"]
+    if values[1] == ENV["GROUP_NAME"] && values[2] == ENV["GROUP_NAME"]
+      msg = "Self-paid #{amount_string}"
+    elsif values[1] == ENV["GROUP_NAME"]
       msg = "Received #{amount_string} from #{values[2]}"
     else
       msg = "Paid #{amount_string} to #{values[1]}"
