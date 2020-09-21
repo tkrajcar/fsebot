@@ -106,7 +106,7 @@ if new_payments.any?
     payment_messages.push msg
   end
 
-  messages.push payment_messages.first(10).reverse.join("\n")
+  messages.push payment_messages.first(15).reverse.join("\n")
 end
 
 
