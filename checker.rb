@@ -90,7 +90,7 @@ if new_payments.any?
     qty = g[1].count
 
     amount_string = "#{amount.format}"
-    amount_string += " (#{qty} jobs)" if qty > 1
+    amount_string += " (#{qty} payments)" if qty > 1
 
     values = g[0]
 
