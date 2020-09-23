@@ -34,7 +34,10 @@ unless bank_text.empty? || cash_text.empty?
 
   if newd["funds"] != old_funds
     diff = newd["funds"] - old_funds
-    messages.push "Funds #{diff > 0 ? 'increased' : 'decreased'} by #{diff.abs.format} to #{newd["funds"].format}."
+    msg = ""
+    msg += diff > 0 ? "📈 Funds increased " : "📉 Funds decreased "
+    msg += "by #{diff.abs.format} to #{newd["funds"].format}."
+    messages.push msg
   end
 end
 
@@ -48,11 +51,11 @@ doc.css("Aircraft").each do |ac|
   rented_by = ac.css("RentedBy").text
   if old_location != new_location
     if new_location == "In Flight"
-      messages.push "#{reg} departed #{old_location}, flown by #{rented_by}."
+      messages.push "🛫 #{reg} departed #{old_location}, flown by #{rented_by}."
     elsif old_location == "In Flight"
-      messages.push "#{reg} arrived at #{new_location}."
+      messages.push "🛬 #{reg} arrived at #{new_location}."
     else
-      messages.push "#{reg} is now located at #{new_location} instead of #{old_location}."
+      messages.push "✈️ #{reg} is now located at #{new_location} instead of #{old_location}."
     end
   end
 end
@@ -93,11 +96,11 @@ if new_payments.any?
 
     msg = ""
     if values[1] == ENV["GROUP_NAME"] && values[2] == ENV["GROUP_NAME"]
-      msg = "Self-paid #{amount_string}"
+      msg = "🔄 Self-paid #{amount_string}"
     elsif values[1] == ENV["GROUP_NAME"]
-      msg = "Received #{amount_string} from #{values[2]}"
+      msg = "💰 Received #{amount_string} from #{values[2]}"
     else
-      msg = "Paid #{amount_string} to #{values[1]}"
+      msg = "💸 Paid #{amount_string} to #{values[1]}"
     end
     msg += " for #{values[3]}"
     msg += " in #{values[5]}" if (values[5] && values[5] != "")
